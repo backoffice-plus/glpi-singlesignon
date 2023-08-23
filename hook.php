@@ -242,38 +242,38 @@ function plugin_singlesignon_install() {
                   KEY `date_creation` (`date_creation`)
                ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci";
 
-      $DB->query($query) or die("error creating glpi_plugin_singlesignon_providers " . $DB->error());
+      $DB->doQuery($query) or die("error creating glpi_plugin_singlesignon_providers " . $DB->error());
    } else {
       $query = "SHOW COLUMNS FROM glpi_plugin_singlesignon_providers LIKE 'is_default'";
-      $result = $DB->query($query) or die($DB->error());
+      $result = $DB->doQuery($query) or die($DB->error());
       if ($DB->numrows($result) != 1) {
-         $DB->query("ALTER TABLE glpi_plugin_singlesignon_providers ADD is_default tinyint(1) NOT NULL DEFAULT '0'") or die($DB->error());
+         $DB->doQuery("ALTER TABLE glpi_plugin_singlesignon_providers ADD is_default tinyint(1) NOT NULL DEFAULT '0'") or die($DB->error());
       }
 
       $query = "SHOW COLUMNS FROM glpi_plugin_singlesignon_providers LIKE 'popup'";
-      $result = $DB->query($query) or die($DB->error());
+      $result = $DB->doQuery($query) or die($DB->error());
       if ($DB->numrows($result) != 1) {
-         $DB->query("ALTER TABLE glpi_plugin_singlesignon_providers ADD popup tinyint(1) NOT NULL DEFAULT '0'") or die($DB->error());
+         $DB->doQuery("ALTER TABLE glpi_plugin_singlesignon_providers ADD popup tinyint(1) NOT NULL DEFAULT '0'") or die($DB->error());
       }
       $query = "SHOW COLUMNS FROM glpi_plugin_singlesignon_providers LIKE 'split_domain'";
-      $result = $DB->query($query) or die($DB->error());
+      $result = $DB->doQuery($query) or die($DB->error());
       if ($DB->numrows($result) != 1) {
-         $DB->query("ALTER TABLE glpi_plugin_singlesignon_providers ADD split_domain tinyint(1) NOT NULL DEFAULT '0'") or die($DB->error());
+         $DB->doQuery("ALTER TABLE glpi_plugin_singlesignon_providers ADD split_domain tinyint(1) NOT NULL DEFAULT '0'") or die($DB->error());
       }
       $query = "SHOW COLUMNS FROM glpi_plugin_singlesignon_providers LIKE 'authorized_domains'";
-      $result = $DB->query($query) or die($DB->error());
+      $result = $DB->doQuery($query) or die($DB->error());
       if ($DB->numrows($result) != 1) {
-         $DB->query("ALTER TABLE glpi_plugin_singlesignon_providers ADD authorized_domains varchar(255) COLLATE utf8_unicode_ci NULL") or die($DB->error());
+         $DB->doQuery("ALTER TABLE glpi_plugin_singlesignon_providers ADD authorized_domains varchar(255) COLLATE utf8_unicode_ci NULL") or die($DB->error());
       }
       $query = "SHOW COLUMNS FROM glpi_plugin_singlesignon_providers LIKE 'use_email_for_login'";
-      $result = $DB->query($query) or die($DB->error());
+      $result = $DB->doQuery($query) or die($DB->error());
       if ($DB->numrows($result) != 1) {
-         $DB->query("ALTER TABLE glpi_plugin_singlesignon_providers ADD use_email_for_login tinyint(1) NOT NULL DEFAULT '0'") or die($DB->error());
+         $DB->doQuery("ALTER TABLE glpi_plugin_singlesignon_providers ADD use_email_for_login tinyint(1) NOT NULL DEFAULT '0'") or die($DB->error());
       }
       $query = "SHOW COLUMNS FROM glpi_plugin_singlesignon_providers LIKE 'split_name'";
-      $result = $DB->query($query) or die($DB->error());
+      $result = $DB->doQuery($query) or die($DB->error());
       if ($DB->numrows($result) != 1) {
-         $DB->query("ALTER TABLE glpi_plugin_singlesignon_providers ADD split_name tinyint(1) NOT NULL DEFAULT '0'") or die($DB->error());
+         $DB->doQuery("ALTER TABLE glpi_plugin_singlesignon_providers ADD split_name tinyint(1) NOT NULL DEFAULT '0'") or die($DB->error());
       }
    }
 
@@ -281,13 +281,13 @@ function plugin_singlesignon_install() {
    $query_display_pref = "SELECT id
       FROM glpi_displaypreferences
       WHERE itemtype = 'PluginSinglesignonProvider'";
-   $res_display_pref = $DB->query($query_display_pref);
+   $res_display_pref = $DB->doQuery($query_display_pref);
    if ($DB->numrows($res_display_pref) == 0) {
-      $DB->query("INSERT INTO `glpi_displaypreferences` VALUES (NULL,'PluginSinglesignonProvider','2','1','0');");
-      $DB->query("INSERT INTO `glpi_displaypreferences` VALUES (NULL,'PluginSinglesignonProvider','3','2','0');");
-      $DB->query("INSERT INTO `glpi_displaypreferences` VALUES (NULL,'PluginSinglesignonProvider','5','4','0');");
-      $DB->query("INSERT INTO `glpi_displaypreferences` VALUES (NULL,'PluginSinglesignonProvider','6','5','0');");
-      $DB->query("INSERT INTO `glpi_displaypreferences` VALUES (NULL,'PluginSinglesignonProvider','10','6','0');");
+      $DB->doQuery("INSERT INTO `glpi_displaypreferences` VALUES (NULL,'PluginSinglesignonProvider','2','1','0');");
+      $DB->doQuery("INSERT INTO `glpi_displaypreferences` VALUES (NULL,'PluginSinglesignonProvider','3','2','0');");
+      $DB->doQuery("INSERT INTO `glpi_displaypreferences` VALUES (NULL,'PluginSinglesignonProvider','5','4','0');");
+      $DB->doQuery("INSERT INTO `glpi_displaypreferences` VALUES (NULL,'PluginSinglesignonProvider','6','5','0');");
+      $DB->doQuery("INSERT INTO `glpi_displaypreferences` VALUES (NULL,'PluginSinglesignonProvider','10','6','0');");
    }
 
    if (version_compare($currentVersion, "1.2.0", '<')) {
@@ -295,7 +295,7 @@ function plugin_singlesignon_install() {
                 ADD `picture` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
                 ADD `bgcolor` varchar(7) DEFAULT NULL,
                 ADD `color` varchar(7) DEFAULT NULL";
-      $DB->query($query) or die("error adding picture column " . $DB->error());
+      $DB->doQuery($query) or die("error adding picture column " . $DB->error());
    }
    if (version_compare($currentVersion, "1.3.0", '<')) {
       $query = "CREATE TABLE `glpi_plugin_singlesignon_providers_users` (
@@ -307,7 +307,7 @@ function plugin_singlesignon_install() {
          UNIQUE KEY `unicity` (`plugin_singlesignon_providers_id`,`users_id`),
          UNIQUE KEY `unicity_remote` (`plugin_singlesignon_providers_id`,`remote_id`)
        ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;";
-      $DB->query($query) or die("error creating glpi_plugin_singlesignon_providers_users " . $DB->error());
+      $DB->doQuery($query) or die("error creating glpi_plugin_singlesignon_providers_users " . $DB->error());
    }
 
    Config::setConfigurationValues('singlesignon', [
@@ -333,7 +333,7 @@ function plugin_singlesignon_uninstall() {
    // Old version tables
    if (sso_TableExists("glpi_plugin_singlesignon_providers")) {
       $query = "DROP TABLE `glpi_plugin_singlesignon_providers`";
-      $DB->query($query) or die("error deleting glpi_plugin_singlesignon_providers");
+      $DB->doQuery($query) or die("error deleting glpi_plugin_singlesignon_providers");
    }
 
    return true;
