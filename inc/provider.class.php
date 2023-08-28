@@ -84,6 +84,10 @@ class PluginSinglesignonProvider extends CommonDBTM {
       return __sso('Single Sign-on');
    }
 
+   public function setToken($token) {
+      $this->_token = $token;
+   }
+
    function defineTabs($options = []) {
 
       $ong = [];
