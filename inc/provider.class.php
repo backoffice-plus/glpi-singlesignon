@@ -1211,29 +1211,19 @@ class PluginSinglesignonProvider extends CommonDBTM {
          }
       }
 
+      $default_condition = [];
+
+      $userFound = false;
+
       if ($login && $user->getFromDBbyName($login)) {
-         return $user;
+         $userFound = true;
+      } else if ($email && $user->getFromDBbyEmail($email, $default_condition)) {
+         $userFound = true;
       }
 
-      $default_condition = '';
-
-      if (version_compare(GLPI_VERSION, '9.3', '>=')) {
-         $default_condition = [];
-      }
-
-      $bOk = true;
-      if ($email && $user->getFromDBbyEmail($email, $default_condition)) {
-         return $user;
-      } else {
-         $bOk = false;
-      }
-
-      // var_dump($bOk);
-      // die();
-
-      // If the user does not exist in the database and the provider is generic (Ex: azure ad without common tenant)
-      if (static::getClientType() == "generic" && !$bOk) {
-         try {
+      try {
+         // create new user if user does not already exists
+         if (!$userFound) {
             // Generates an api token and a personal token... probably not necessary
             $tokenAPI = base_convert(hash('sha256', time() . mt_rand()), 16, 36);
             $tokenPersonnel = base_convert(hash('sha256', time() . mt_rand()), 16, 36);
@@ -1268,50 +1258,47 @@ class PluginSinglesignonProvider extends CommonDBTM {
 
             //$user->check(-1, CREATE, $userPost);
             $newID = $user->add($userPost);
+         }
 
-            // var_dump($newID);
+         // if specified assign profiles from roles
+         if(isset($resource_array['roles'])) {
+            global $DB;
 
-            $profils = 0;
-            // Verification default profiles exist in the entity
-            // If no default profile exists, the user will not be able to log in.
-            // In this case, we retrieve a profile and an entity and assign these values ​​to it.
-            // The administrator can change these values ​​later.
-            if (0 == Profile::getDefault()) {
-               // No default profiles
-               // Profile recovery and assignment
-               global $DB;
+            // clear all profiles for the user
+            Profile_User::deleteRights(intval($user->fields['id']));
 
-               $datasProfiles = [];
-               foreach ($DB->request('glpi_profiles') as $data) {
-                  array_push($datasProfiles, $data);
-               }
-               $datasEntities = [];
-               foreach ($DB->request('glpi_entities') as $data) {
-                  array_push($datasEntities, $data);
-               }
-               if (count($datasProfiles) > 0 && count($datasEntities) > 0) {
-                  $profils = $datasProfiles[0]['id'];
-                  $entitie = $datasEntities[0]['id'];
-
-                  $profile   = new Profile_User();
-                  $userProfile['users_id'] = intval($user->fields['id']);
-                  $userProfile['entities_id'] = intval($entitie);
-                  $userProfile['is_recursive'] = 0;
-                  $userProfile['profiles_id'] = intval($profils);
-                  $userProfile['add'] = "Ajouter";
-                  $profile->add($userProfile);
-               } else {
-                  return false;
-               }
+            $profileMap = [];
+            foreach ($DB->request('glpi_profiles') as $profile) {
+               $role = 'glpi_'.strtolower(str_replace("-", "_",$profile['name']));
+               $profileMap[$role] = $profile;
             }
 
-            return $user;
-         } catch (\Exception $ex) {
-            return false;
+            $entities = [];
+            foreach ($DB->request('glpi_entities') as $entity) {
+               array_push($entities, $entity);
+            }
+
+            foreach($resource_array['roles'] as $role) {
+               // skip all roles that do not belong to us or a not mapable
+               if(!str_starts_with($role, 'glpi_') || !isset($profileMap[$role]))
+                  continue;
+
+               foreach($entities as $entity) {
+                  $profile   = new Profile_User();
+                  $userProfile['users_id'] = intval($user->fields['id']);
+                  $userProfile['entities_id'] = intval($entity['id']);
+                  $userProfile['is_recursive'] = 0;
+                  $userProfile['profiles_id'] = intval($profileMap[$role]['id']);
+                  $userProfile['add'] = "Ajouter";
+                  $profile->add($userProfile);
+               }
+            }
          }
+      } catch (\Exception $ex) {
+         return false;
       }
 
-      return false;
+      return $user;
    }
 
    public function login() {
