@@ -1113,6 +1113,8 @@ class PluginSinglesignonProvider extends CommonDBTM {
    }
 
    public function findUser() {
+      global $CFG_GLPI;
+
       $resource_array = $this->getResourceOwner();
 
       if (!$resource_array) {
@@ -1262,6 +1264,21 @@ class PluginSinglesignonProvider extends CommonDBTM {
 
             //$user->check(-1, CREATE, $userPost);
             $newID = $user->add($userPost);
+         }
+
+         // map keycloak locale to glpi language
+         if(isset($resource_array['locale'])) {
+            foreach($CFG_GLPI['languages'] as $glpi_locale => $locale_data) {
+               if($locale_data[3] == $resource_array['locale']) {
+                  if($user->language != $glpi_locale) {
+                     $user->update([
+                        'id' => $user->fields['id'],
+                        'language' => $glpi_locale
+                     ]);
+                  }
+                  break;
+               }
+            }
          }
 
          // if specified assign profiles from roles
