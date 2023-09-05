@@ -1130,7 +1130,7 @@ class PluginSinglesignonProvider extends CommonDBTM {
       }
 
       $remote_id = false;
-      $remote_id_fields = ['id', 'username', 'sub'];
+      $remote_id_fields = ['id', 'username', 'preferred_username', 'sub'];
 
       foreach ($remote_id_fields as $field) {
          if (isset($resource_array[$field]) && !empty($resource_array[$field])) {
@@ -1193,7 +1193,7 @@ class PluginSinglesignonProvider extends CommonDBTM {
       if ($email && $use_email) {
          $login = $email;
       } else {
-         $login_fields = ['userPrincipalName', 'login', 'username', 'id', 'name', 'displayName'];
+         $login_fields = ['userPrincipalName', 'login', 'preferred_username', 'username', 'id', 'name', 'displayName'];
 
          foreach ($login_fields as $field) {
             if (isset($resource_array[$field]) && is_string($resource_array[$field])) {
@@ -1360,7 +1360,7 @@ class PluginSinglesignonProvider extends CommonDBTM {
       }
 
       $remote_id = false;
-      $id_fields = ['id', 'sub', 'username'];
+      $id_fields = ['id', 'sub', 'username', 'preferred_username'];
 
       foreach ($id_fields as $field) {
          if (isset($resource_array[$field]) && !empty($resource_array[$field])) {
