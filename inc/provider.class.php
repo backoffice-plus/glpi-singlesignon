@@ -1234,14 +1234,14 @@ class PluginSinglesignonProvider extends CommonDBTM {
             $tokenAPI = base_convert(hash('sha256', time() . mt_rand()), 16, 36);
             $tokenPersonnel = base_convert(hash('sha256', time() . mt_rand()), 16, 36);
 
-            $splitname = $this->fields['split_name'];
+           /* $splitname = $this->fields['split_name'];
             $firstLastArray = ($splitname) ? preg_split('/ /', $resource_array['name'], 2) : preg_split('/ /', $resource_array['displayName'], 2);
-
+*/
             $userPost = [
                'name' => $login,
                'add' => 1,
-               'realname' => $firstLastArray[1],
-               'firstname' => $firstLastArray[0],
+               'realname' => $resource_array['family_name'],
+               'firstname' => $resource_array['given_name'],
                'api_token' => $tokenAPI,
                'personal_token' => $tokenPersonnel,
                'is_active' => 1
