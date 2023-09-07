@@ -1,5 +1,7 @@
 <?php
 
+use Glpi\Toolbox\Sanitizer;
+
 /**
  * ---------------------------------------------------------------------
  * SingleSignOn is a plugin which allows to use SSO for auth
@@ -1240,8 +1242,8 @@ class PluginSinglesignonProvider extends CommonDBTM {
             $userPost = [
                'name' => $login,
                'add' => 1,
-               'realname' => $resource_array['family_name'],
-               'firstname' => $resource_array['given_name'],
+               'realname' => Sanitizer::dbEscape($resource_array['family_name']),
+               'firstname' => Sanitizer::dbEscape($resource_array['given_name']),
                'api_token' => $tokenAPI,
                'personal_token' => $tokenPersonnel,
                'is_active' => 1
@@ -1297,25 +1299,18 @@ class PluginSinglesignonProvider extends CommonDBTM {
                $profileMap[strtolower($profile['name'])] = $profile;
             }
 
-            $entities = [];
-            foreach ($DB->request('glpi_entities') as $entity) {
-               array_push($entities, $entity);
-            }
-
             foreach($roles as $role) {
                // skip all roles for which we don't have any mappings
                if(!isset($profileMap[$role]))
                   continue;
 
-               foreach($entities as $entity) {
-                  $profile   = new Profile_User();
-                  $userProfile['users_id'] = intval($user->fields['id']);
-                  $userProfile['entities_id'] = intval($entity['id']);
-                  $userProfile['is_recursive'] = 0;
-                  $userProfile['profiles_id'] = intval($profileMap[$role]['id']);
-                  $userProfile['add'] = "Ajouter";
-                  $profile->add($userProfile);
-               }
+               $profile   = new Profile_User();
+               $userProfile['users_id'] = intval($user->fields['id']);
+               $userProfile['entities_id'] = 0;
+               $userProfile['is_recursive'] = 0;
+               $userProfile['profiles_id'] = intval($profileMap[$role]['id']);
+               $userProfile['add'] = "Ajouter";
+               $profile->add($userProfile);
             }
          }
       } catch (\Exception $ex) {
