@@ -1255,11 +1255,11 @@ class PluginSinglesignonProvider extends CommonDBTM {
             $newID = $user->add($userPost);
          }
 
-         // Sync office location from keycloak
-         if (isset($resource_array['officeLocation'])) {
+         // Sync office location
+         if (isset($resource_array['location'])) {
             global $DB;
             foreach ($DB->request('glpi_locations') as $location) {
-               if ($location['name'] == $resource_array['officeLocation']) {
+               if ($location['name'] == $resource_array['location']) {
                   $user->update([
                      'id' => $user->fields['id'],
                      'locations_id' => $location['id']
