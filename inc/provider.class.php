@@ -1285,7 +1285,8 @@ class PluginSinglesignonProvider extends CommonDBTM {
          }
 
          // if specified assign profiles from roles
-         if(isset($resource_array['roles'])) {
+         if(isset($resource_array['resource_access'][$this->getClientId()]['roles'])) {
+            $roles = $resource_array['resource_access'][$this->getClientId()]['roles'];
             global $DB;
 
             // clear all profiles for the user
@@ -1293,8 +1294,7 @@ class PluginSinglesignonProvider extends CommonDBTM {
 
             $profileMap = [];
             foreach ($DB->request('glpi_profiles') as $profile) {
-               $role = 'glpi_'.strtolower(str_replace("-", "_",$profile['name']));
-               $profileMap[$role] = $profile;
+               $profileMap[strtolower($profile['name'])] = $profile;
             }
 
             $entities = [];
@@ -1302,9 +1302,9 @@ class PluginSinglesignonProvider extends CommonDBTM {
                array_push($entities, $entity);
             }
 
-            foreach($resource_array['roles'] as $role) {
-               // skip all roles that do not belong to us or a not mapable
-               if(!str_starts_with($role, 'glpi_') || !isset($profileMap[$role]))
+            foreach($roles as $role) {
+               // skip all roles for which we don't have any mappings
+               if(!isset($profileMap[$role]))
                   continue;
 
                foreach($entities as $entity) {
