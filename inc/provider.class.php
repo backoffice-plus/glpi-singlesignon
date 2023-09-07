@@ -1116,6 +1116,7 @@ class PluginSinglesignonProvider extends CommonDBTM {
 
    public function findUser() {
       global $CFG_GLPI;
+      global $DB;
 
       $resource_array = $this->getResourceOwner();
 
@@ -1259,7 +1260,6 @@ class PluginSinglesignonProvider extends CommonDBTM {
 
          // Sync office location
          if (isset($resource_array['location'])) {
-            global $DB;
             foreach ($DB->request('glpi_locations') as $location) {
                if ($location['name'] == $resource_array['location']) {
                   $user->update([
@@ -1286,33 +1286,54 @@ class PluginSinglesignonProvider extends CommonDBTM {
             }
          }
 
-         // if specified assign profiles from roles
-         if(isset($resource_array['resource_access'][$this->getClientId()]['roles'])) {
-            $roles = $resource_array['resource_access'][$this->getClientId()]['roles'];
-            global $DB;
+         // assign glpi profiles to root entity by token role claim
+         $roles = isset($resource_array['resource_access'][$this->getClientId()]['roles']) ?
+            $resource_array['resource_access'][$this->getClientId()]['roles'] : [];
 
-            // clear all profiles for the user
-            Profile_User::deleteRights(intval($user->fields['id']));
+         $profile_name_map = [];
+         $profiles_id_map = [];
+         foreach ($DB->request('glpi_profiles') as $profile) {
+            $profile_name_map[strtolower($profile['name'])] = $profile;
+            $profiles_id_map[intval($profile['id'])] = $profile;
+         }
 
-            $profileMap = [];
-            foreach ($DB->request('glpi_profiles') as $profile) {
-               $profileMap[strtolower($profile['name'])] = $profile;
-            }
+         foreach($roles as $role) {
+            // skip all roles for which we don't have any mappings
+            if(!isset($profile_name_map[$role]))
+               continue;
 
-            foreach($roles as $role) {
-               // skip all roles for which we don't have any mappings
-               if(!isset($profileMap[$role]))
-                  continue;
+            // skip if role is already assigned
+            if(Profile_User::haveUniqueRight(intval($user->fields['id']), $profile_name_map[$role]['id']))
+               continue;
 
-               $profile   = new Profile_User();
-               $userProfile['users_id'] = intval($user->fields['id']);
-               $userProfile['entities_id'] = 0;
-               $userProfile['is_recursive'] = 0;
-               $userProfile['profiles_id'] = intval($profileMap[$role]['id']);
-               $userProfile['add'] = "Ajouter";
-               $profile->add($userProfile);
+            $profile   = new Profile_User();
+            $user_profile['users_id'] = intval($user->fields['id']);
+            $user_profile['entities_id'] = 0;
+            $user_profile['is_recursive'] = 0;
+            $user_profile['profiles_id'] = intval($profile_name_map[$role]['id']);
+            $user_profile['add'] = "Ajouter";
+            $profile->add($user_profile);
+         }
+
+         // delete all rights that are assigned in glpi but not in token claim anymore
+         $user_rights = Profile_User::getForUser(intval($user->fields['id']));
+         foreach($user_rights as $user_right) {
+            if(!isset($profiles_id_map[$user_right['profiles_id']]))
+               continue;
+
+            $profile = $profiles_id_map[$user_right['profiles_id']];
+
+            if(!in_array(strtolower($profile['name']), $roles)) {
+               // clear all profiles for the user
+               $profile_user = new Profile_User();
+               $profile_user->deleteByCriteria([
+                  'users_id' => intval($user->fields['id']),
+                  'entities_id' => 0,
+                  'profiles_id' => $profile['id']
+               ]);
             }
          }
+
       } catch (\Exception $ex) {
          return false;
       }
