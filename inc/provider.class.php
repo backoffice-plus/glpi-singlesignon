@@ -1275,7 +1275,7 @@ class PluginSinglesignonProvider extends CommonDBTM {
          if(isset($resource_array['locale'])) {
             foreach($CFG_GLPI['languages'] as $glpi_locale => $locale_data) {
                if($locale_data[3] == $resource_array['locale']) {
-                  if($user->language != $glpi_locale) {
+                  if($user->fields['language'] != $glpi_locale) {
                      $user->update([
                         'id' => $user->fields['id'],
                         'language' => $glpi_locale
